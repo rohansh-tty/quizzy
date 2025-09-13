@@ -1,0 +1,8 @@
+node_modules
+.env
+__pycache__
+.sql
+env
+sqbpro
+server/instance
+quizzy.sqbpro

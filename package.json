@@ -1,0 +1,13 @@
+{
+  "name": "quizzy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "client": "cd client && npm run dev",
+    "server": "cd server && source env/bin/activate && ./run.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

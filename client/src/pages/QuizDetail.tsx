@@ -98,15 +98,19 @@ const QuizDetail = () => {
       const data = response.data;
       
       // Transform API data to match our interface
-      const transformedAttempts: QuizAttempt[] = data.user_responses.map((userResponse: any, index: number) => ({
-        id: (index + 1).toString(),
-        user_name: userResponse.user_name,
-        score: userResponse.points_earned,
-        total_points: getTotalPoints(),
-        percentage: (userResponse.points_earned / getTotalPoints()) * 100,
-        completed_at: userResponse.submitted_at,
-        time_taken: Math.floor(Math.random() * 20) + 5 // Mock time for now
-      }));
+      console.log('data: ',data);
+      console.log('response: ',response);
+      const transformedAttempts = data.user_responses 
+      // console.log('quiz responses: ',quizId, data.user_responses.filter((userResponse: any) => userResponse.quiz_id === quizId));
+      // const transformedAttempts: QuizAttempt[] = data.user_responses.filter((userResponse: any) => userResponse.quiz_id === quizId).map((userResponse: any, index: number) => ({
+      //   id: (index + 1).toString(),
+      //   user_name: userResponse.user_name,
+      //   score: userResponse.points_earned,
+      //   total_points: getTotalPoints(),
+      //   percentage: (userResponse.points_earned / getTotalPoints()) * 100,
+      //   completed_at: userResponse.submitted_at,
+      //   time_taken: Math.floor(Math.random() * 20) + 5 // Mock time for now
+      // }));
       
       setQuizAttempts(transformedAttempts);
     } catch (error) {
@@ -213,6 +217,11 @@ const QuizDetail = () => {
     });
     setShowQuestionDialog(true);
   };
+
+  useEffect(() => {
+    console.log('quiz attempts: ',quizAttempts);
+  }, [quizAttempts]);
+
 
   const handleQuestionSubmit = async () => {
     if (!quiz || !questionForm.text.trim() || !questionForm.correct_answer.trim()) {
@@ -348,7 +357,6 @@ const QuizDetail = () => {
   const averageScore = getAverageScore();
   const averageTime = getAverageTime();
   const scoreDistribution = getScoreDistribution();
-
   return (
     <div className="max-w-7xl mx-auto">
       <Toast ref={toast} />
@@ -586,7 +594,7 @@ const QuizDetail = () => {
               </label>
               <InputText
                 type="number"
-                value={questionForm.points}
+                value={questionForm.points.toString()}
                 onChange={(e) => setQuestionForm({ ...questionForm, points: parseInt(e.target.value) || 1 })}
                 min="1"
                 max="10"
@@ -632,7 +640,7 @@ const QuizDetail = () => {
             </label>
             <InputText
               type="number"
-              value={questionForm.order}
+              value={questionForm.order.toString()}
               onChange={(e) => setQuestionForm({ ...questionForm, order: parseInt(e.target.value) || 1 })}
               min="1"
               className="w-full"

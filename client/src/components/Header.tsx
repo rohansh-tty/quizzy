@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from 'primereact/button';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -29,8 +31,26 @@ const Header = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              Share your quiz with the share code!
+            <div className="flex items-center space-x-3">
+              <div className="text-sm text-gray-600">
+                Share your quiz with the share code!
+              </div>
+              <div className="flex items-center space-x-2">
+                <img 
+                  src={user?.picture} 
+                  alt={user?.name} 
+                  className="w-8 h-8 rounded-full"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {user?.name}
+                </span>
+                <Button
+                  label="Logout"
+                  icon="pi pi-sign-out"
+                  className="p-button-text p-button-sm"
+                  onClick={logout}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -39,4 +59,4 @@ const Header = () => {
   );
 };
 
-export default Header; 
+export default Header;

@@ -5,6 +5,8 @@ import uuid
 import click
 from flask_cors import CORS
 from sqlalchemy import text
+# from faker import Faker
+
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quizzy.db'
@@ -12,6 +14,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Models
+class Event(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    user_email = db.Column(db.String(120), nullable=False)
+    event_details = db.Column(db.String(120), nullable=False)
+    status = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+
 class User(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -61,6 +73,47 @@ def generate_share_code():
     import random
     import string
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+@app.route('/api/generate-username', methods=['POST'])
+def generate_username():
+    # fake = Faker()
+    # username = fake.user_name()
+    username = "test"
+    return jsonify({'username': username})
+
+
+@app.route('/api/event', methods=['POST'])
+def update_event_details():
+    data = request.get_json()
+    
+    # Parse created_at string to datetime object
+    created_at = None
+    if data.get('created_at'):
+        try:
+            created_at = datetime.fromisoformat(data['created_at'].replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            # If parsing fails, use current time
+            created_at = datetime.utcnow()
+    else:
+        created_at = datetime.utcnow()
+    
+    event = Event(
+        user_id=data['user_id'],
+        user_email=data['user_email'],
+        event_details=data['event_details'],
+        status=data['status'],
+        created_at=created_at
+    )
+    db.session.add(event)
+    db.session.commit()
+    return jsonify({
+        'id': event.id,
+        'user_id': event.user_id,
+        'user_email': event.user_email,
+        'event_details': event.event_details,
+        'status': event.status,
+        'created_at': event.created_at.isoformat()
+    })
 
 # User CRUD endpoints
 @app.route('/api/users', methods=['POST'])
@@ -198,6 +251,9 @@ def get_quiz(quiz_id):
     if not quiz:
         return jsonify({'error': 'Quiz not found'}), 404
     
+    quiz_responses = QuizResponse.query.filter_by(quiz_id=quiz_id).group_by(QuizResponse.user_email).all()
+    print(f"quiz_responses: {[quiz_response.user_email for quiz_response in quiz_responses]}")
+    
     return jsonify({
         'id': quiz.id,
         'title': quiz.title,
@@ -214,6 +270,7 @@ def get_quiz(quiz_id):
             'points': q.points,
             'order': q.order
         } for q in quiz.questions]
+
     })
 
 @app.route('/api/quizzes/<quiz_id>', methods=['PUT'])
@@ -433,7 +490,7 @@ def submit_quiz_responses():
                 user_phone=user_phone,
                 answer=answer,
                 is_correct=is_correct,
-                points_earned=total_points
+                points_earned=question.points
             )
             
             db.session.add(quiz_response)
@@ -465,54 +522,22 @@ def get_quiz_responses(quiz_id):
     if not quiz:
         return jsonify({'error': 'Quiz not found'}), 404
     
-    # Get unique users who took this quiz
-    # unique_users = db.session.query(
-    #     QuizResponse.user_name,
-    #     QuizResponse.user_email,
-    #     QuizResponse.user_phone,
-    #     QuizResponse.submitted_at,
-    #     QuizResponse.points_earned,
-    #     QuizResponse.question_id,
-    #     QuizResponse.is_correct,
-    #     QuizResponse.answer,
-    #     Question.points
-    # ).join(Question, QuizResponse.question_id == Question.id).filter_by(quiz_id=quiz_id).distinct().group_by(QuizResponse.user_email).all()
-
     unique_users_query = """
     select user_name, user_email, user_phone, quiz_response.quiz_id, quiz.title,
 SUM(quiz_response.points_earned) as points_earned,
 SUM(quiz_response.is_correct) as correct_answers,
 SUM(question.points) as total_points,
 COUNT(quiz_response.question_id) as total_questions
-from quiz_response
+from quiz_response 
 join question on quiz_response.question_id = question.id 
 join quiz on quiz_response.quiz_id = quiz.id
+where quiz_response.quiz_id = :quiz_id
 group by user_email, user_name, user_phone, quiz_response.quiz_id, quiz.title
     """
 
 
-    unique_users = db.session.execute(text(unique_users_query)).fetchall()
-    # print(f"unique_users result >>: {unique_users[0].total_score}")
-    # # create a total score for each user
-    # total_score = {}
-    # for user in unique_users:
-    #     total_score[user.user_email] = {
-    #         'total_points': 0,
-    #         'points_earned': 0,
-    #         'correct_answers': 0,
-    #         'total_questions': 0
-    #     }
-    # print(f"unique_users: {unique_users}")
-    # for response in unique_users:
-    #     if response.is_correct:
-    #         total_score[user.user_email]['correct_answers'] += 1
-    #         total_score[user.user_email]['points_earned'] += response.points
-
-    # print(f"total_score: {total_score}")
-   # Get all responses for this quiz
-    responses = QuizResponse.query.filter_by(quiz_id=quiz_id).order_by(QuizResponse.submitted_at.desc()).all()
+    unique_users = db.session.execute(text(unique_users_query), {'quiz_id': quiz_id}).fetchall()
     
-    # Group responses by user
     user_responses = {}
     for user in unique_users:
         user_key = f"{user.user_email}_{datetime.now().isoformat()}"
@@ -528,23 +553,6 @@ group by user_email, user_name, user_phone, quiz_response.quiz_id, quiz.title
             'total_questions': user.total_questions,
             'percentage': round((user.correct_answers / user.total_questions) * 100) if user.total_questions > 0 else 0
         }
-    
-    # Populate user responses
-    # for response in responses:
-    #     user_key = f"{response.user_email}_{response.submitted_at.isoformat()}"
-    #     if user_key in user_responses:
-    #         user_responses[user_key]['total_points'] += response.points_earned
-    #         if response.is_correct:
-    #             user_responses[user_key]['correct_answers'] += 1
-    #         user_responses[user_key]['total_questions'] += 1
-    
-    # # Calculate percentages for each user
-    # for user_data in user_responses.values():
-    #     if user_data['total_questions'] > 0:
-    #         user_data['percentage'] = round((user_data['correct_answers'] / user_data['total_questions']) * 100)
-    #     else:
-    #         user_data['percentage'] = 0
-    print(f"user_responses >>: {user_responses}")
     
     return jsonify({
         'quiz_id': quiz_id,

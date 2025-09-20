@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { Card } from 'primereact/card';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -47,7 +47,7 @@ const CreateQuiz = () => {
     is_public: true
   });
   
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState({
@@ -90,40 +90,7 @@ const CreateQuiz = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       // {
-    const sampleResponse = {
-      "id": "My3HZpW9",
-      "title": "Screenshot-from-2025-08-22-19-03-20",
-      "url_viewer": "https://ibb.co/My3HZpW9",
-      "url": "https://i.ibb.co/1YwN7Khb/Screenshot-from-2025-08-22-19-03-20.png",
-      "display_url": "https://i.ibb.co/wZxqBC3Y/Screenshot-from-2025-08-22-19-03-20.png",
-      "width": 1624,
-      "height": 547,
-      "size": 53194,
-      "time": 1755954933,
-      "expiration": 600,
-      "image": {
-          "filename": "Screenshot-from-2025-08-22-19-03-20.png",
-          "name": "Screenshot-from-2025-08-22-19-03-20",
-          "mime": "image/png",
-          "extension": "png",
-          "url": "https://i.ibb.co/1YwN7Khb/Screenshot-from-2025-08-22-19-03-20.png"
-      },
-      "thumb": {
-          "filename": "Screenshot-from-2025-08-22-19-03-20.png",
-          "name": "Screenshot-from-2025-08-22-19-03-20",
-          "mime": "image/png",
-          "extension": "png",
-          "url": "https://i.ibb.co/My3HZpW9/Screenshot-from-2025-08-22-19-03-20.png"
-      },
-      "medium": {
-          "filename": "Screenshot-from-2025-08-22-19-03-20.png",
-          "name": "Screenshot-from-2025-08-22-19-03-20",
-          "mime": "image/png",
-          "extension": "png",
-          "url": "https://i.ibb.co/wZxqBC3Y/Screenshot-from-2025-08-22-19-03-20.png"
-      },
-      "delete_url": "https://ibb.co/My3HZpW9/32e76836108cb06d21e4f6ddd5461fc9"
-    }
+    
       const data = await response.json();
       return data;
     } catch (error) {
@@ -497,7 +464,7 @@ const handleImageUpload = async (file: File) => {
             <Checkbox
               inputId="is_public"
               checked={quizData.is_public}
-              onChange={(e) => setQuizData({ ...quizData, is_public: e.checked })}
+              onChange={(e: any) => setQuizData({ ...quizData, is_public: e?.checked ?? false })}
             />
             <label htmlFor="is_public" className="text-sm text-gray-700">
               Make this quiz public

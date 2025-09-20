@@ -106,7 +106,7 @@ const Auth: React.FC = () => {
         // TODO: check if user exists in backend, if user is not found, redirect user to signup page
         if (isSignup) {
           const response = await createUser(user);
-          if (response.status in [200, 201]) {
+          if (response?.status in [200, 201]) {
             await updateEventDetails({
               user_id: user.id,
               user_email: user.email,
@@ -144,7 +144,7 @@ const Auth: React.FC = () => {
             status: "success",
             created_at: new Date().toISOString(),
           });
-          if (response.status === 200) {
+          if (response?.status === 200) {
             navigate("/");
           } else {
             await updateEventDetails({
@@ -169,16 +169,7 @@ const Auth: React.FC = () => {
     console.error("Google login failed");
   };
 
-  const toggleMode = () => {
-    setIsSignup(!isSignup);
-    setError("");
-    setFormData({
-      username: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    });
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

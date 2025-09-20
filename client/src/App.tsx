@@ -2,12 +2,23 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { PrimeReactProvider } from 'primereact/api';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import CreateQuiz from './pages/CreateQuiz';
-import TakeQuiz from './pages/TakeQuiz';
-import QuizList from './pages/QuizList';
-import QuizDetail from './pages/QuizDetail';
-import Auth from './pages/Auth';
-import Header from './components/Header';
+import { lazy, Suspense } from 'react';
+
+
+const Header = lazy(() => import('./components/Header'));
+const Auth = lazy(() => import('./pages/Auth'));
+const CreateQuiz = lazy(() => import('./pages/CreateQuiz'));
+const TakeQuiz = lazy(() => import('./pages/TakeQuiz'));
+const QuizList = lazy(() => import('./pages/QuizList'));
+const QuizDetail = lazy(() => import('./pages/QuizDetail'));
+
+const PageLoader = () => {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+    </div>
+  );
+};
 
 function App() {
   return (
@@ -16,6 +27,7 @@ function App() {
         <Router>
           <div className="min-h-screen bg-gray-50">
             <Routes>
+              <Suspense fallback={<PageLoader />}>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={
                 <ProtectedRoute>
@@ -56,6 +68,7 @@ function App() {
                   </main>
                 </div>
               } />
+              </Suspense>
             </Routes>
           </div>
         </Router>

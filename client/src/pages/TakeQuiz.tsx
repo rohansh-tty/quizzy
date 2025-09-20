@@ -54,7 +54,7 @@ const TakeQuiz = () => {
   const [userInfoSubmitted, setUserInfoSubmitted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Answer[]>([]);
-  const [quizCompleted, setQuizCompleted] = useState(false);
+  // const [quizCompleted, setQuizCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [showResults, setShowResults] = useState(false);
@@ -165,14 +165,14 @@ const TakeQuiz = () => {
     }
 
     setScore(earnedPoints);
-    setQuizCompleted(true);
+    // setQuizCompleted(true);
     setShowResults(true);
   };
 
   const restartQuiz = () => {
     setCurrentQuestionIndex(0);
     setAnswers(quiz?.questions.map(q => ({ questionId: q.id, answer: '' })) || []);
-    setQuizCompleted(false);
+    // setQuizCompleted(false);
     setScore(0);
     setShowResults(false);
   };

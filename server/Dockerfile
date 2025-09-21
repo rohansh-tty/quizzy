@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
     gcc \
     curl \
     && rm -rf /var/lib/apt/lists/*
-    health
 # Copy requirements first for better caching
 COPY requirements.txt .
 

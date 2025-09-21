@@ -12,6 +12,7 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { useRef } from 'react';
 import axios from 'axios';
+import { API_URL } from '../apis';
 
 interface Question {
   id: string;
@@ -77,7 +78,7 @@ const QuizDetail = () => {
 
   const fetchQuizDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/quizzes/${quizId}`);
+      const response = await axios.get(`${API_URL}/api/quizzes/${quizId}`);
       setQuiz(response.data);
     } catch (error) {
       toast.current?.show({
@@ -94,7 +95,7 @@ const QuizDetail = () => {
 
   const fetchQuizAttempts = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/quizzes/${quizId}/responses`);
+      const response = await axios.get(`${API_URL}/api/quizzes/${quizId}/responses`);
       const data = response.data;
       
       // Transform API data to match our interface
@@ -248,7 +249,7 @@ const QuizDetail = () => {
     try {
       if (editingQuestion) {
         // Update existing question
-        await axios.put(`http://localhost:5000/api/questions/${editingQuestion.id}`, {
+        await axios.put(`${API_URL}/api/questions/${editingQuestion.id}`, {
           text: questionForm.text,
           question_type: questionForm.question_type,
           options: questionForm.question_type === 'multiple_choice' ? questionForm.options : [],
@@ -265,7 +266,7 @@ const QuizDetail = () => {
         });
       } else {
         // Add new question
-        await axios.post(`http://localhost:5000/api/quizzes/${quiz.id}/questions`, {
+        await axios.post(`${API_URL}/api/quizzes/${quiz.id}/questions`, {
           text: questionForm.text,
           question_type: questionForm.question_type,
           options: questionForm.question_type === 'multiple_choice' ? questionForm.options : [],
@@ -305,7 +306,7 @@ const QuizDetail = () => {
     }
     
     try {
-      await axios.delete(`http://localhost:5000/api/questions/${questionId}`);
+      await axios.delete(`${API_URL}/api/questions/${questionId}`);
       
       toast.current?.show({
         severity: 'success',
@@ -390,7 +391,7 @@ const QuizDetail = () => {
             <Button
               label="Copy Share URL"
               icon="pi pi-copy"
-              onClick={() => copyShareCode(`http://localhost:3000/take/${quiz.share_code}`)}
+              onClick={() => copyShareCode(`${API_URL}/take/${quiz.share_code}`)}
               className="p-button-secondary"
             />
             <Button

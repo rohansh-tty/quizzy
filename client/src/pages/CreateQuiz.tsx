@@ -9,6 +9,7 @@ import { Checkbox } from 'primereact/checkbox';
 import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 import axios from 'axios';
+import { API_URL } from '../apis';
 
 interface Media {
   id: string;
@@ -252,7 +253,7 @@ const handleImageUpload = async (file: File) => {
       // For demo purposes, using a mock user ID
       const mockUserId = 'a5140530-3ed6-4b97-ae3b-75c61744c7ad';
       
-      const response = await axios.post('http://localhost:5000/api/quizzes', {
+      const response = await axios.post(`${API_URL}/api/quizzes`, {
         ...quizData,
         user_id: mockUserId,
         cover_image: quizCoverImage ? {
@@ -360,7 +361,7 @@ const handleImageUpload = async (file: File) => {
 
     try {
       for (const question of questions) {
-        await axios.post(`http://localhost:5000/api/quizzes/${createdQuiz.id}/questions`, {
+        await axios.post(`${API_URL}/api/quizzes/${createdQuiz.id}/questions`, {
           text: question.text,
           question_type: question.question_type,
           options: question.question_type === 'multiple_choice' ? question.options : [],

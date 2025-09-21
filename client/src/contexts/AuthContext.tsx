@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { API_URL } from '../apis';
 
 interface User {
   id: string;
@@ -56,7 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signup = async (signupData: SignupData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch(`${API_URL}/api/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,7 +8,7 @@ import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 import axios from 'axios';
-
+import { API_URL } from '../apis';
 interface Question {
   id: string;
   text: string;
@@ -69,7 +69,7 @@ const TakeQuiz = () => {
   const fetchQuiz = async (code: string) => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:5000/api/quizzes/share/${code}`);
+      const response = await axios.get(`${API_URL}/api/quizzes/share/${code}`);
       const quizData = response.data;
       setQuiz(quizData);
       setTotalPoints(quizData.questions.reduce((sum: number, q: Question) => sum + q.points, 0));
@@ -138,7 +138,7 @@ const TakeQuiz = () => {
 
     try {
       // Submit responses to backend
-      const response = await axios.post('http://localhost:5000/api/quiz-responses', {
+      const response = await axios.post(`${API_URL}/api/quiz-responses`, {
         quiz_id: quiz.id,
         user_name: userInfo.name,
         user_email: userInfo.email,

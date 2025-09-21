@@ -7,7 +7,7 @@ import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 import axios from 'axios';
-
+import { API_URL } from '../apis';
 interface Question {
   id: string;
   text: string;
@@ -42,7 +42,7 @@ const QuizList = () => {
       setLoading(true);
       // For demo purposes, using a mock user ID
       const mockUserId = 'a5140530-3ed6-4b97-ae3b-75c61744c7ad';
-      const response = await axios.get(`http://localhost:5000/api/quizzes?user_id=${mockUserId}`);
+      const response = await axios.get(`${API_URL}/api/quizzes?user_id=${mockUserId}`);
       console.log(response.data);
       setQuizzes(response.data);
     } catch (error) {
@@ -59,7 +59,7 @@ const QuizList = () => {
 
   const deleteQuiz = async (quizId: string) => {
     try {
-      await axios.delete(`http://localhost:5000/api/quizzes/${quizId}`);
+      await axios.delete(`${API_URL}/api/quizzes/${quizId}`);
       setQuizzes(quizzes.filter(q => q.id !== quizId));
       toast.current?.show({
         severity: 'success',
@@ -103,7 +103,7 @@ const QuizList = () => {
 
   const itemTemplate = (quiz: Quiz) => {
     const totalPoints = getTotalPoints(quiz?.questions || []);
-    const shareUrl = `http://localhost:3000/take/${quiz.share_code}`;
+    const shareUrl = `${API_URL}/take/${quiz.share_code}`;
 
     return (
       <Card className="mb-4 shadow-sm hover:shadow-md transition-shadow">

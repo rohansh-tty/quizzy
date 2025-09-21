@@ -918,6 +918,21 @@ def view_responses(quiz_id):
                     click.echo(f"   ✅ Correct: {correct_responses}")
                     click.echo(f"   🔗 Share Code: {quiz.share_code}")
 
+# Root route for domain access
+@app.route('/')
+def index():
+    return jsonify({
+        'message': 'Welcome to Quizzy API!',
+        'status': 'running',
+        'endpoints': {
+            'health': '/health',
+            'api_docs': 'All API endpoints are under /api/',
+            'quizzes': '/api/quizzes',
+            'users': '/api/users'
+        }
+    })
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

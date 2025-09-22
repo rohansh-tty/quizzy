@@ -5,10 +5,11 @@ import uuid
 import click
 from flask_cors import CORS
 from sqlalchemy import text
+from dotenv import load_dotenv
 # from faker import Faker
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[load_dotenv('CLIENT_URL')])
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quizzy.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)

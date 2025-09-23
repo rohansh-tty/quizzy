@@ -9,7 +9,25 @@ from dotenv import load_dotenv
 # from faker import Faker
 
 app = Flask(__name__)
-CORS(app, origins=[load_dotenv('CLIENT_URL')])
+CLIENT_URL = load_dotenv('CLIENT_URL')
+CORS(app, resources={
+    # Health endpoints - allow ANY origin (*)
+    r"/health/*": {
+        "origins": "*",
+        "methods": ["GET", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    },
+    # All other endpoints - only specific client URLs
+    r"/api/*": {
+        "origins": [
+            CLIENT_URL
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        # "supports_credentials": True  # Allow cookies/auth headers
+    }
+})
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quizzy.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)

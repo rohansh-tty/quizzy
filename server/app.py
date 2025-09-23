@@ -952,6 +952,27 @@ def index():
     })
 
 
+@app.after_request
+def add_cors_headers(response):
+    from flask import request
+    
+    origin = request.headers.get('Origin')
+    
+    # Health endpoints - allow any origin
+    if request.path.startswith('/health/'):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    
+    # All other endpoints - only allow specific origins
+    elif origin in [CLIENT_URL]:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    
+    return response
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

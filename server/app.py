@@ -20,7 +20,7 @@ CORS(app, resources={
     # All other endpoints - only specific client URLs
     r"/api/*": {
         "origins": [
-            CLIENT_URL
+            'https://quizzy-three-orcin.vercel.app/'
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
@@ -965,7 +965,7 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     
     # All other endpoints - only allow specific origins
-    elif origin in [CLIENT_URL]:
+    elif origin in ['https://quizzy-three-orcin.vercel.app/']:
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'

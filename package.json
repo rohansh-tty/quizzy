@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "client": "cd client && npm run dev",
-    "server": "cd server && docker compose up -d"
+    "server:up": "cd server && docker compose up --build",
+    "server:down": "cd server && docker compose down"
   },
   "author": "",
   "license": "ISC",

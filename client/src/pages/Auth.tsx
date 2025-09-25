@@ -28,8 +28,11 @@ const Auth: React.FC = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log("Auth component rendered", { isSignup, isLoading, error });
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    console.log("Input change", { name, value, currentFormData: formData });
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -39,31 +42,39 @@ const Auth: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submit triggered", { isSignup, formData });
     setError("");
     setIsLoading(true);
 
     try {
       if (isSignup) {
+        console.log("Processing signup form");
         // Validate signup form
         if (!formData.username || !formData.email || !formData.password) {
+          console.log("Validation failed: missing required fields", formData);
           setError("All fields are required");
           return;
         }
         if (formData.password !== formData.confirmPassword) {
+          console.log("Validation failed: passwords don't match");
           setError("Passwords do not match");
           return;
         }
         if (formData.password.length < 6) {
+          console.log("Validation failed: password too short", formData.password.length);
           setError("Password must be at least 6 characters long");
           return;
         }
 
+        console.log("Validation passed, calling signup API");
         await signup({
           username: formData.username,
           email: formData.email,
           password: formData.password,
         });
+        console.log("Signup API call completed successfully");
       } else {
+        console.log("Login form submitted - showing error message");
         // Handle login (for now, just show error since we don't have login endpoint)
         setError(
           "Email/password login not implemented yet. Please use Google sign-in."
@@ -71,8 +82,10 @@ const Auth: React.FC = () => {
         return;
       }
     } catch (err: any) {
+      console.error("Form submission error", err);
       setError(err.message || "An error occurred");
     } finally {
+      console.log("Form submission completed, setting loading to false");
       setIsLoading(false);
     }
   };
@@ -80,9 +93,15 @@ const Auth: React.FC = () => {
   const handleGoogleSuccess = async (
     credentialResponse: CredentialResponse
   ) => {
+    console.log("Google OAuth success triggered", { 
+      hasCredential: !!credentialResponse.credential,
+      isSignup 
+    });
+    
     if (credentialResponse.credential) {
       // Decode the JWT token to get user information
       try {
+        console.log("Decoding Google JWT token");
         const base64Url = credentialResponse.credential.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
         const jsonPayload = decodeURIComponent(
@@ -93,6 +112,7 @@ const Auth: React.FC = () => {
         );
 
         const userData = JSON.parse(jsonPayload);
+        console.log("Decoded user data from Google", userData);
 
         const user = {
           id: userData.sub,
@@ -102,11 +122,18 @@ const Auth: React.FC = () => {
           username: userData.name,
         };
 
+        console.log("Processed user object", user);
+        console.log("Calling login function");
         login(user);
+        
         // TODO: check if user exists in backend, if user is not found, redirect user to signup page
         if (isSignup) {
+          console.log("Signup flow: creating user in backend");
           const response = await createUser(user);
+          console.log("Create user response", response);
+          
           if (response?.status in [200, 201]) {
+            console.log("User created successfully, updating event details");
             await updateEventDetails({
               user_id: user.id,
               user_email: user.email,
@@ -114,8 +141,10 @@ const Auth: React.FC = () => {
               status: "success",
               created_at: new Date().toISOString(),
             });
+            console.log("Event details updated for signup success, navigating to home");
             navigate("/");
           } else {
+            console.log("User creation failed, updating event details with error");
             await updateEventDetails({
               user_id: user.id,
               user_email: user.email,
@@ -123,41 +152,54 @@ const Auth: React.FC = () => {
               status: "error",
               created_at: new Date().toISOString(),
             });
+            console.log("Setting isSignup to true due to creation failure");
             // navigate("/signup");
             setIsSignup(true);
             return;
           }
         } else {
+          console.log("Login flow: checking if user exists in backend");
           // update event details in backend
           // check if user exists in backend, if user is not found, redirect user to signup page
-          const userResponse = await getUser(user.id);
-          console.log('userResponse: ',userResponse);
+          console.log("Getting user from backend", user);
+          const userResponse = await getUser(user.email);
+          console.log('User lookup response:', userResponse, userResponse);
+          
           if (userResponse.status !== 200) {
+            console.log("User not found, switching to signup mode");
             // navigate("/");
             setIsSignup(true);
             return;
           }
-          const response = await updateEventDetails({
-            user_id: user.id,
-            user_email: user.email,
-            event_details: "user-signin",
-            status: "success",
-            created_at: new Date().toISOString(),
-          });
-          if (response?.status === 200) {
-            navigate("/");
-          } else {
-            await updateEventDetails({
-              user_id: user.id,
-              user_email: user.email,
-              event_details: "user-signin",
-              status: "error",
-              created_at: new Date().toISOString(),
-            });
-            setIsSignup(false);
-            return;
-            // navigate("/signin");
-          }
+          
+          console.log("User found, updating event details for signin");
+          navigate("/");
+          // const response = await updateEventDetails({
+          //   user_id: user.id,
+          //   user_email: user.email,
+          //   event_details: "user-signin",
+          //   status: "success",
+          //   created_at: new Date().toISOString(),
+          // });
+          // console.log("Event details update response", response);
+          
+          // if (response?.status === 200) {
+          //   console.log("Signin successful, navigating to home");
+          //   navigate("/");
+          // } else {
+          //   console.log("Event details update failed, logging error event");
+          //   // await updateEventDetails({
+          //   //   user_id: user.id,
+          //   //   user_email: user.email,
+          //   //   event_details: "user-signin",
+          //   //   status: "error",
+          //   //   created_at: new Date().toISOString(),
+          //   // });
+          //   console.log("Setting isSignup to false due to event update failure");
+          //   setIsSignup(false);
+          //   return;
+          //   // navigate("/signin");
+          // }
         }
       } catch (error) {
         console.error("Error decoding Google credential:", error);
@@ -169,7 +211,17 @@ const Auth: React.FC = () => {
     console.error("Google login failed");
   };
 
+  const handleToggleMode = (newMode: boolean) => {
+    console.log("Toggling auth mode", { from: isSignup, to: newMode });
+    setIsSignup(newMode);
+  };
 
+  console.log("Rendering Auth component", { 
+    isSignup, 
+    isLoading, 
+    hasError: !!error,
+    formDataKeys: Object.keys(formData).filter(key => formData[key as keyof typeof formData])
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -197,7 +249,7 @@ const Auth: React.FC = () => {
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
-                onClick={() => setIsSignup(false)}
+                onClick={() => handleToggleMode(false)}
               />
               <Button
                 label="Sign Up"
@@ -206,7 +258,7 @@ const Auth: React.FC = () => {
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
-                onClick={() => setIsSignup(true)}
+                onClick={() => handleToggleMode(true)}
               />
             </div>
 

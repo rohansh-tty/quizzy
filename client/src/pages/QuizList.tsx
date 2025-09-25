@@ -8,6 +8,7 @@ import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 import axios from 'axios';
 import { API_URL } from '../apis';
+import { useAuth } from '../contexts/AuthContext';
 interface Question {
   id: string;
   text: string;
@@ -32,7 +33,7 @@ const QuizList = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const toast = useRef<Toast>(null);
-
+  const { user } = useAuth();
   useEffect(() => {
     fetchQuizzes();
   }, []);
@@ -41,8 +42,12 @@ const QuizList = () => {
     try {
       setLoading(true);
       // For demo purposes, using a mock user ID
-      const mockUserId = 'a5140530-3ed6-4b97-ae3b-75c61744c7ad';
-      const response = await axios.get(`${API_URL}/api/quizzes?user_id=${mockUserId}`);
+      // const mockUserId = 'a5140530-3ed6-4b97-ae3b-75c61744c7ad';
+      const response = await axios.get(`${API_URL}/api/quizzes`, {
+        params: {
+          user_id: user?.id
+        }
+      });
       console.log(response.data);
       setQuizzes(response.data);
     } catch (error) {

@@ -20,7 +20,9 @@ CORS(app, resources={
     # All other endpoints - only specific client URLs
     r"/api/*": {
         "origins": [
-            'https://quizzy-three-orcin.vercel.app/'
+            'https://quizzy-three-orcin.vercel.app/',
+            'http://localhost:5173',
+            'http://localhost:3000'
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
@@ -135,6 +137,19 @@ def update_event_details():
     })
 
 # User CRUD endpoints
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    users = User.query.all()
+    user_list = []  
+    for user in users:
+        user_list.append({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'created_at': user.created_at.isoformat()
+        })
+    return jsonify(user_list)
+
 @app.route('/api/users', methods=['POST'])
 def create_user():
     data = request.get_json()
@@ -143,8 +158,9 @@ def create_user():
         return jsonify({'error': 'Username and email are required'}), 400
     
     # Check if user already exists
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'error': 'Username already exists'}), 400
+
+    # if User.query.filter_by(id=data['id']).first():
+    #     return jsonify({'error': 'User already exists'}), 400
     
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already exists'}), 400
@@ -160,9 +176,10 @@ def create_user():
         'created_at': user.created_at.isoformat()
     }), 201
 
-@app.route('/api/users/<user_id>', methods=['GET'])
-def get_user(user_id):
-    user = User.query.get(user_id)
+@app.route('/api/users', methods=['GET'])
+def get_user():
+    user_email = request.args.get('user_email')
+    user = User.query.filter_by(email=user_email).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
@@ -173,9 +190,9 @@ def get_user(user_id):
         'created_at': user.created_at.isoformat()
     })
 
-@app.route('/api/users/<user_id>', methods=['PUT'])
-def update_user(user_id):
-    user = User.query.get(user_id)
+@app.route('/api/users/<user_email>', methods=['PUT'])
+def update_user(user_email):
+    user = User.query.filter_by(email=user_email).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
@@ -194,16 +211,59 @@ def update_user(user_id):
         'created_at': user.created_at.isoformat()
     })
 
-@app.route('/api/users/<user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    user = User.query.get(user_id)
+@app.route('/api/users', methods=['DELETE'])
+def delete_user():
+    user_email = request.args.get('user_email')
+    force = request.args.get('force', 'false').lower() == 'true'
+    
+    if not user_email:
+        return jsonify({'error': 'User email is required'}), 400
+    
+    user = User.query.filter_by(email=user_email).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    db.session.delete(user)
-    db.session.commit()
+    # Check if user has associated quizzes
+    user_quizzes = Quiz.query.filter_by(user_id=user.id).all()
+    user_responses = QuizResponse.query.filter_by(user_email=user.email).all()
+
+    quiz_count = len(user_quizzes)
+    response_count = len(user_responses)
+    print(f'user_quizzes: {user_quizzes}')
+    print(f'user_responses: {user_responses}')
+    print(f'quiz_count: {quiz_count}')
+    print(f'response_count: {response_count}')
+    print(f'force: {force}')
     
-    return jsonify({'message': 'User deleted successfully'})
+    if quiz_count > 0 and not force:
+        # Return warning with details about what will be deleted
+        quiz_titles = [quiz.title for quiz in user_quizzes]
+        return jsonify({
+            'warning': f'User has {quiz_count} associated quiz(es) that will be deleted',
+            'user_email': user.email,
+            'user_id': user.id,
+            'quizzes_to_delete': quiz_titles,
+            'quiz_count': quiz_count,
+            'message': 'Add ?force=true to confirm deletion with cascade'
+        }), 409  # Conflict status code
+
+
+    try:
+        # Delete user (this will cascade to quizzes due to the relationship)
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'User deleted successfully',
+            'cascaded_deletions': {
+                'quizzes_deleted': quiz_count,
+                'quiz_titles': [quiz.title for quiz in user_quizzes] if user_quizzes else []
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete user: {str(e)}'}), 500
 
 # Quiz CRUD endpoints
 @app.route('/api/quizzes', methods=['POST'])
@@ -965,7 +1025,7 @@ def add_cors_headers(response):
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     
     # All other endpoints - only allow specific origins
-    elif origin in ['https://quizzy-three-orcin.vercel.app/']:
+    elif origin in ['https://quizzy-three-orcin.vercel.app/', 'http://localhost:5173']:
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'

@@ -20,9 +20,7 @@ CORS(app, resources={
     # All other endpoints - only specific client URLs
     r"/api/*": {
         "origins": [
-            'https://quizzy-three-orcin.vercel.app/',
-            'http://localhost:5173',
-            'http://localhost:3000'
+            'https://quizzy-three-orcin.vercel.app',
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
@@ -1010,28 +1008,6 @@ def index():
             'users': '/api/users'
         }
     })
-
-
-@app.after_request
-def add_cors_headers(response):
-    from flask import request
-    
-    origin = request.headers.get('Origin')
-    
-    # Health endpoints - allow any origin
-    if request.path.startswith('/health/'):
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    
-    # All other endpoints - only allow specific origins
-    elif origin in ['https://quizzy-three-orcin.vercel.app/', 'http://localhost:5173']:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-    
-    return response
 
 if __name__ == '__main__':
     with app.app_context():

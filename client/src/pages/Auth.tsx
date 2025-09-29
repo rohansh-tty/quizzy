@@ -28,7 +28,7 @@ const Auth: React.FC = () => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [userObject, setUserObject] = useState<any | null>(null);
+  // const [userObject, setUserObject] = useState<any | null>(null);
 
   console.log("Auth component rendered", { isSignup, isLoading, error });
 
@@ -145,7 +145,7 @@ const Auth: React.FC = () => {
             //   created_at: new Date().toISOString(),
             // });
             localStorage.setItem('user', JSON.stringify(response.data));
-            setUserObject(user);
+            // setUserObject(user);
             console.log("Event details updated for signup success, navigating to home");
             navigate("/");
           } else {
@@ -182,7 +182,7 @@ const Auth: React.FC = () => {
             return;
           }
           localStorage.setItem('user', JSON.stringify(userResponse.data));
-          setUserObject(user);
+          // setUserObject(user);
           console.log("User found, updating event details for signin");
           navigate("/");
         }

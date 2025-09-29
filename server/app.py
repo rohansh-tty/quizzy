@@ -6,9 +6,48 @@ import click
 from flask_cors import CORS
 from sqlalchemy import text
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from flask import g
+import os
+from flask_migrate import Migrate
+
 # from faker import Faker
 
 app = Flask(__name__)
+def init_app(app):
+    db.init_app(app)
+    # TODO: Uncomment this when we have a model
+    with app.app_context():
+        db.create_all()
+
+def get_db(app):
+    if 'db' not in g:
+        g.db = create_engine(os.getenv("LOCAL_SQLALCHEMY_DATABASE_URI"))
+        g.db.init_app(app)
+    return g.db
+
+db = SQLAlchemy()
+import logging
+
+logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+logging.getLogger('sqlalchemy.pool').setLevel(logging.DEBUG)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 5,           # Connections per worker
+    'max_overflow': 10,       # Extra connections if needed
+    'pool_timeout': 30,       # Timeout for getting a connection
+    'pool_pre_ping': True     # Check connection health
+}
+
+@app.cli.command("init-db")
+def init_db():
+    """Initialize the database and create all tables."""
+    with app.app_context():
+        db.create_all()
+    print("Database initialized and tables created.")
+
 CLIENT_URL = load_dotenv('CLIENT_URL')
 CORS(app, resources={
     # Health endpoints - allow ANY origin (*)
@@ -27,12 +66,9 @@ CORS(app, resources={
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         # "supports_credentials": True  # Allow cookies/auth headers
-    }
+    },
 })
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quizzy.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
 # Models
 class Event(db.Model):
@@ -163,6 +199,8 @@ def create_user():
     #     return jsonify({'error': 'User already exists'}), 400
     
     if User.query.filter_by(email=data['email']).first():
+        response = User.query.filter_by(email=data['email']).first()
+        print(f"response: {response}")
         return jsonify({'error': 'Email already exists'}), 400
     
     user = User(username=data['username'], email=data['email'])
@@ -271,11 +309,11 @@ def create_quiz():
     data = request.get_json()
 
     
-    if not data or not data.get('title') or not data.get('user_id'):
-        return jsonify({'error': 'Title and user_id are required'}), 400
+    if not data or not data.get('title') or not data.get('user_email'):
+        return jsonify({'error': 'Title and user_email are required'}), 400
     
     # Check if user exists
-    user = User.query.get(data['user_id'])
+    user = User.query.filter_by(email=data['user_email']).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
@@ -289,7 +327,7 @@ def create_quiz():
         description=data.get('description', ''),
         is_public=data.get('is_public', True),
         share_code=share_code,
-        user_id=data['user_id']
+        user_id=user.id
     )
     
     db.session.add(quiz)
@@ -309,6 +347,7 @@ def create_quiz():
 def get_quizzes():
     user_id = request.args.get('user_id')
     if user_id:
+        user_id='a3fa7534-e072-4c81-a9ec-75ec9f6d36a7'
         quizzes = Quiz.query.filter_by(user_id=user_id).all()
     else:
         quizzes = Quiz.query.filter_by(is_public=True).all()
@@ -1010,6 +1049,12 @@ def index():
             'users': '/api/users'
         }
     })
+
+
+init_app(app)
+migrate = Migrate(app, db)
+
+
 
 if __name__ == '__main__':
     with app.app_context():

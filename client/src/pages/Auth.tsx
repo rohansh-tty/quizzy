@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { GOOGLE_CLIENT_ID } from "../config/googleAuth";
 import { updateEventDetails } from "../apis/event";
 import { createUser, getUser } from "../apis/user";
+import {toast} from 'react-hot-toast'
 
 const Auth: React.FC = () => {
   const { login, signup } = useAuth();
@@ -27,6 +28,7 @@ const Auth: React.FC = () => {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [userObject, setUserObject] = useState<any | null>(null);
 
   console.log("Auth component rendered", { isSignup, isLoading, error });
 
@@ -124,29 +126,32 @@ const Auth: React.FC = () => {
 
         console.log("Processed user object", user);
         console.log("Calling login function");
-        login(user);
+
+
         
         // TODO: check if user exists in backend, if user is not found, redirect user to signup page
         if (isSignup) {
           console.log("Signup flow: creating user in backend");
           const response = await createUser(user);
-          console.log("Create user response", response);
+          console.log("Create user response", response, response.status);
           
-          if (response?.status in [200, 201]) {
+          if (response.status === 200 || response.status === 201) {
             console.log("User created successfully, updating event details");
-            await updateEventDetails({
-              user_id: user.id,
-              user_email: user.email,
-              event_details: "user-signup",
-              status: "success",
-              created_at: new Date().toISOString(),
-            });
+            // await updateEventDetails({
+            //   user_id: response.data.id, // this is user uuid from backend
+            //   user_email: user.email,
+            //   event_details: "user-signup",
+            //   status: "success",
+            //   created_at: new Date().toISOString(),
+            // });
+            localStorage.setItem('user', JSON.stringify(response.data));
+            setUserObject(user);
             console.log("Event details updated for signup success, navigating to home");
             navigate("/");
           } else {
             console.log("User creation failed, updating event details with error");
             await updateEventDetails({
-              user_id: user.id,
+              user_id: response.data.id, // this is user uuid from backend
               user_email: user.email,
               event_details: "user-signup",
               status: "error",
@@ -159,50 +164,35 @@ const Auth: React.FC = () => {
           }
         } else {
           console.log("Login flow: checking if user exists in backend");
+          login(user); // LOGGING USER HERE....
           // update event details in backend
           // check if user exists in backend, if user is not found, redirect user to signup page
           console.log("Getting user from backend", user);
           const userResponse = await getUser(user.email);
-          console.log('User lookup response:', userResponse, userResponse);
-          
+          if ('error' in userResponse) {
+            toast.error(userResponse.data.error as string);
+            return;
+          }
+                    console.log('User lookup response:', userResponse, userResponse);
+
           if (userResponse.status !== 200) {
             console.log("User not found, switching to signup mode");
             // navigate("/");
             setIsSignup(true);
             return;
           }
-          
+          localStorage.setItem('user', JSON.stringify(userResponse.data));
+          setUserObject(user);
           console.log("User found, updating event details for signin");
           navigate("/");
-          // const response = await updateEventDetails({
-          //   user_id: user.id,
-          //   user_email: user.email,
-          //   event_details: "user-signin",
-          //   status: "success",
-          //   created_at: new Date().toISOString(),
-          // });
-          // console.log("Event details update response", response);
-          
-          // if (response?.status === 200) {
-          //   console.log("Signin successful, navigating to home");
-          //   navigate("/");
-          // } else {
-          //   console.log("Event details update failed, logging error event");
-          //   // await updateEventDetails({
-          //   //   user_id: user.id,
-          //   //   user_email: user.email,
-          //   //   event_details: "user-signin",
-          //   //   status: "error",
-          //   //   created_at: new Date().toISOString(),
-          //   // });
-          //   console.log("Setting isSignup to false due to event update failure");
-          //   setIsSignup(false);
-          //   return;
-          //   // navigate("/signin");
-          // }
         }
-      } catch (error) {
-        console.error("Error decoding Google credential:", error);
+      } catch (error: any) {
+        // console.error("Error decoding Google credential:", error,);
+        toast.error(error.response.data.error as string,  {
+          duration: 4000,
+          position: 'top-center',
+        });
+        return;
       }
     }
   };

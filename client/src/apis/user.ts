@@ -7,7 +7,7 @@ const response = await api.post("/api/users", {
     username: user.username,
     email: user.email,
   });
-  return response.data;
+  return response;
 };
 
 const getUser = async (user_id: string) => {

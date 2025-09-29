@@ -8,6 +8,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
+    python3-dev \
+    libpq-dev \
+    && pip install psycopg2-binary \
     && rm -rf /var/lib/apt/lists/*
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -31,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 # Run the application
 # CMD ["python", "app.py"]
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "4"]
+# CMD ["gunicorn", "app:app", "--preload" "--bind", "0.0.0.0:5000", "--workers", "4"]

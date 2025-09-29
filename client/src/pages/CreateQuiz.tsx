@@ -10,6 +10,7 @@ import { Toast } from 'primereact/toast';
 import { useRef } from 'react';
 import axios from 'axios';
 import { API_URL } from '../apis';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Media {
   id: string;
@@ -47,6 +48,8 @@ const CreateQuiz = () => {
     description: '',
     is_public: true
   });
+  const { user } = useAuth();
+
   
   // const navigate = useNavigate();
   
@@ -251,11 +254,12 @@ const handleImageUpload = async (file: File) => {
 
     try {
       // For demo purposes, using a mock user ID
-      const mockUserId = 'a5140530-3ed6-4b97-ae3b-75c61744c7ad';
+      // const mockUserId = 'a5140530-3ed6-4b97-ae3b-75c61744c7ad';
       
       const response = await axios.post(`${API_URL}/api/quizzes`, {
         ...quizData,
-        user_id: mockUserId,
+        // user_id: mockUserId,
+        user_email: user?.email,
         cover_image: quizCoverImage ? {
           name: quizCoverImage.name,
           type: quizCoverImage.type,
@@ -498,7 +502,7 @@ const handleImageUpload = async (file: File) => {
               </code>
             </div>
             <p className="text-sm text-green-600 mt-2">
-              Share URL: <span className="font-mono">http://localhost:3000/take/{createdQuiz.share_code}</span>
+              Share URL: <span className="font-mono">{`${import.meta.env.VITE_CLIENT_URL}/take/${createdQuiz.share_code}`}</span>
             </p>
           </div>
         </Card>

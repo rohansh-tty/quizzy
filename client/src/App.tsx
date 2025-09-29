@@ -3,6 +3,7 @@ import { PrimeReactProvider } from 'primereact/api';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { lazy, Suspense } from 'react';
+import { Toaster } from 'react-hot-toast';
 
 // Lazy load components
 const Header = lazy(() => import('./components/Header'));
@@ -70,6 +71,32 @@ function App() {
                 } />
               </Routes>
             </Suspense>
+            <Toaster
+              position="top-center"
+              reverseOrder={false}
+              gutter={8}
+              containerClassName=""
+              containerStyle={{}}
+              toasterId="default"
+              toastOptions={{
+                // Define default options
+                className: '',
+                duration: 5000,
+                removeDelay: 1000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+                // Default options for specific types
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: 'green',
+                    secondary: 'black',
+                  },
+                },
+              }}
+            />
           </div>
         </Router>
       </AuthProvider>
